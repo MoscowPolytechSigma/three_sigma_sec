@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container">
+  {% if review_exist == False %}
+  <h2 class="mb-3 text-center text-uppercase font-weight-bold">Оставьте отзыв</h2>
+  <form method="post">
+    <label for="grade">Выберете вашу оценку</label>
+    <select
+      class="form-select"
+      aria-label="Default select example"
+      name="grade"
+      id="grade"
+    >
+      <option selected value="5">отлично</option>
+      <option value="4">хорошо</option>
+      <option value="3">удовлетворительно</option>
+      <option value="2">неудовлетворительно</option>
+      <option value="1">плохо</option>
+      <option value="0">ужасно</option>
+    </select>
+    <textarea
+      id="comment"
+      name="comment"
+      placeholder="Напишите отзыв"
+      class="form-control"
+      rows="5"
+    ></textarea>
+    <div class="mb-3 text-center">
+      <input type="submit" class="btn btn-dark" value="Отправить" />
+    </div>
+  </form>
+  {% else %}
+  <h2 class="mb-3 text-center text-uppercase font-weight-bold">Ваш отзыв(ы)</h2>
+  {% for review in review_cur_user %}
+  <div class="rewiew">
+    <div class="rewiew1">
+      <p>Автор: {{ review.user.full_name }}</p>
+      <p>Дата отзыва: {{ review.created_at }}</p>
+      <p>Оценка: {{ review.rating }}</p>
+    </div>
+    <p>{{ review.text}}</p>
+  </div>
+  {% endfor %} {% endif %}
+  <div class="my-5">
+    <h2 class="mb-3 text-center text-uppercase font-weight-bold">
+      Все отзывы по курсу
+    </h2>
+
+    <form class="mb-5 mt-3 row align-items-center">
+      <div class="col-md-10 my-3">
+        <select
+          class="form-select"
+          id="category_of_sorting"
+          name="category_of_sorting"
+          title="Тип сортировки"
+        >
+          <option value="new_date" {% if request.args.get('category_of_sorting') == "new_date" or session.get("category", None) == None or session.get("category", None) == "new_date" %} selected {% endif %}>По новизне</option>
+          <option value="positive" {% if request.args.get('category_of_sorting') == "positive" or session.get("category", None) == "positive" %} selected {% endif %}>Сначала положительные</option>
+          <option value="negative" {% if request.args.get('category_of_sorting') == "negative" or session.get("category", None) == "negative" %} selected {% endif %}>Сначала отрицательные</option>
+        </select>
+      </div>
+      <div class="col-md-2 my-3 align-self-end">
+        <button type="submit" class="btn btn-dark w-100 mt-auto">
+          Применить
+        </button>
+      </div>
+    </form>
+    
+  </div>
+  <div class="courses-list container-fluid mt-3 mb-3">
+    {% for review in reviews %}
+    <div class="rewiew">
+      <div class="rewiew1">
+        <p>Автор: {{ review.user.full_name }}</p>
+        <p>Дата отзыва: {{ review.created_at }}</p>
+        <p>Оценка: {{ review.rating }}</p>
+      </div>
+      <p>{{ review.text}}</p>
+    </div>
+    {% endfor %}
+  </div>
+   
+  {% if count_notes > per_page %}
+        <nav aria-label="Page navigation example">
+            <ul class="pagination">
+                <li class="page-item">
+                    <a class="page-link" href="{{url_for(request.endpoint, course_id=course_id, page=active_page-1)}}">Previous</a>
+                </li>
+
+                {% for page in range(start_page, end_page + 1) %}
+                    <li class="page-item">
+                        <a 
+                            class="page-link {% if page == active_page %} active {% endif %}" 
+                            href="{{url_for(request.endpoint, course_id=course_id, page=page)}}"
+                        >
+                            {{page}}
+                        </a>
+                    </li>
+                {% endfor %}
+
+                <li class="page-item">
+                    <a class="page-link" href="{{url_for(request.endpoint, course_id=course_id, page=active_page+1)}}">Next</a>
+                </li>
+            </ul>
+        </nav>
+    {% endif %}
+   
+</div>
+{% endblock %}
