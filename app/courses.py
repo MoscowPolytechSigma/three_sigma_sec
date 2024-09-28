@@ -1,8 +1,7 @@
-from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, session
+from flask import Blueprint, render_template, request, flash, redirect, url_for, current_app, session, jsonify
 from flask_login import login_required, current_user
 from sqlalchemy.exc import IntegrityError
-from models import db, Course, Category, User, Review
-from tools import CoursesFilter, ImageSaver
+from models import db, User, Building, Room, Department
 from sqlalchemy import desc, func
 from math import ceil
 
@@ -23,120 +22,81 @@ def search_params():
 
 @bp.route('/')
 def index():
-    courses = CoursesFilter(**search_params()).perform()
-    pagination = db.paginate(courses)
-    courses = pagination.items
-    categories = db.session.execute(db.select(Category)).scalars()
-    return render_template('courses/index.html',
-                           courses=courses,
-                           categories=categories,
-                           pagination=pagination,
-                           search_params=search_params())
+    return render_template('index.html')
 
-@bp.route('/new')
-@login_required
-def new():
-    course = Course()
-    categories = db.session.execute(db.select(Category)).scalars()
-    users = db.session.execute(db.select(User)).scalars()
-    return render_template('courses/new.html',
-                           categories=categories,
-                           users=users,
-                           course=course)
+# Функция для расчета площадей и объемов
+@bp.route('/calculate', methods=['GET'])
+def calculate():
+    rooms =  db.session.execute(db.select(Room)).scalars().all()
+    results = []
+    for room in rooms:
+        area = room.width * room.length
+        volume = area * room.building.ceiling_height
+        results.append({
+            'room_number': room.room_number,
+            'area': area,
+            'volume': volume
+        })
+    return jsonify(results)
 
-@bp.route('/create', methods=['POST'])
-@login_required
-def create():
-    f = request.files.get('background_img')
-    img = None
-    course = Course()
-    try:
-        if f and f.filename:
-            img = ImageSaver(f).save()
+# Получение информации о факультетах в корпусе
+@bp.route('/departments/<int:building_id>', methods=['GET', 'POST'])
+def get_departments(building_id):
+    departments = Department.query.join(Room).filter(Room.building_id == building_id).all()
+    return jsonify([dept.name for dept in departments])
 
-        image_id = img.id if img else None
-        course = Course(**params(), background_image_id=image_id)
-        db.session.add(course)
-        db.session.commit()
-    except IntegrityError as err:
-        flash(f'Возникла ошибка при записи данных в БД. Проверьте корректность введённых данных. ({err})', 'danger')
-        db.session.rollback()
-        categories = db.session.execute(db.select(Category)).scalars()
-        users = db.session.execute(db.select(User)).scalars()
-        return render_template('courses/new.html',
-                            categories=categories,
-                            users=users,
-                            course=course)
+# Добавление нового корпуса
+@bp.route('/buildings', methods=['GET','POST'])
+def add_building():
+    data = request.json
+    new_building = Building(name=data['name'], ceiling_height=data['ceiling_height'])
+    db.session.add(new_building)
+    db.session.commit()
+    return jsonify({'message': 'Building added!'}), 201
 
-    flash(f'Курс {course.name} был успешно добавлен!', 'success')
+# Изменение информации о корпусе
+@bp.route('/buildings/<int:id>', methods=['PUT'])
+def update_building(id):
+    data = request.json
+    building = Building.query.get_or_404(id)
+    building.name = data['name']
+    building.ceiling_height = data['ceiling_height']
+    db.session.commit()
+    return jsonify({'message': 'Building updated!'})
 
-    return redirect(url_for('courses.index'))
+# Добавление нового помещения
+@bp.route('/rooms', methods=['GET','POST'])
+def add_room():
+    data = request.json
+    new_room = Room(
+        building_id=data['building_id'],
+        room_number=data['room_number'],
+        location=data['location'],
+        width=data['width'],
+        length=data['length'],
+        purpose=data['purpose'],
+        type=data['type'],
+        department_id=data.get('department_id')
+    )
+    db.session.add(new_room)
+    db.session.commit()
+    return jsonify({'message': 'Room added!'}), 201
 
-@bp.route('/<int:course_id>', methods=['GET','POST'])
-def show(course_id):
-    course = db.get_or_404(Course, course_id)
-    check = db.session.execute(db.select(Review).filter_by(user_id=current_user.get_id())).scalar() # проверка к БД, что пользователь не оставлял review к курсу
-    if request.method == "POST" and check is None:
-        grade = int(request.form.get("grade", 0))
-        comment = request.form.get("comment", 0)
-        course.rating_sum += grade
-        course.rating_num += 1
-        new_reviews = Review(
-            rating = grade,
-            text = comment,
-            course_id = course_id,
-            user_id = current_user.id
-        )
-        db.session.add(new_reviews)
-        db.session.commit()
-    if request.method == "POST" and check is not None:
-        flash(f'Вы уже оставляли отзыв !!!!!!!!!!!', 'danger')
-    #5 последний отзывов о курсе
-    reviews = db.session.execute(db.select(Review).filter_by(course_id=course_id).order_by(desc(Review.created_at)).limit(5)).scalars()
-    review_cur_user = db.session.query(Review).filter(Review.user_id == current_user.id, Review.course_id == course.id).all()
-    review_exist = len(review_cur_user) != 0
-    return render_template('courses/show.html',course=course, reviews=reviews, review_exist=review_exist, review_cur_user=review_cur_user)
+# Изменение информации о комнате
+@bp.route('/rooms/<int:id>', methods=['PUT'])
+def update_room(id):
+    data = request.json
+    room = Room.query.get_or_404(id)
+    room.room_number = data['room_number']
+    room.location = data['location']
+    room.width = data['width']
+    room.length = data['length']
+    room.purpose = data['purpose']
+    room.type = data['type']
+    
+    if 'department_id' in data:
+        room.department_id = data['department_id']
 
-@bp.route('/<int:course_id>/reviews', methods=['GET','POST'])
-def show_reviews(course_id):
-    course = db.get_or_404(Course, course_id)
-    check = None
-    check = db.session.execute(db.select(Review).filter_by(user_id=current_user.get_id())).scalar() # проверка к БД, что пользователь не оставлял review к курсу
-    if request.method == "POST" and check is None:
-        grade = int(request.form.get("grade", 0))
-        comment = request.form.get("comment", 0)
-        course.rating_sum += grade
-        course.rating_num += 1
-        new_reviews = Review(
-            rating = grade,
-            text = comment,
-            course_id = course_id,
-            user_id = current_user.id
-        )
-        db.session.add(new_reviews)
-        db.session.commit()
-    if request.method == "POST" and check is not None:
-        flash(f'Вы уже оставляли отзыв !!!!!!!!!!!', 'danger')
-    per_page = current_app.config["PER_PAGE"]
-    active_page = max(int(request.args.get('page', 1)), 1)
-    count_notes = db.session.query(func.count(Review.id)).filter(Review.course_id == course_id).scalar()
-    start_page = max(active_page - 1, 1)
-    end_page = min(active_page + 1, ceil(count_notes / per_page))
-    review_cur_user = db.session.query(Review).filter(Review.user_id == current_user.id, Review.course_id == course.id).all()
-    review_exist = len(review_cur_user) != 0
-    category = request.args.get('category_of_sorting', None)
-    if category is None:
-        category = session.get("category", None)
-    if category == "positive" :
-        reviews = db.session.execute(db.select(Review).filter_by(course_id=course_id).order_by(desc(Review.rating)).limit(per_page).offset((active_page-1)*per_page)).scalars()
-        session["category"] = "positive"
-    elif category == "negative" :
-        reviews = db.session.execute(db.select(Review).filter_by(course_id=course_id).order_by(Review.rating).limit(per_page).offset((active_page-1)*per_page)).scalars()
-        session["category"] = "negative"
-    else: 
-        reviews = db.session.execute(db.select(Review).filter_by(course_id=course_id).order_by(desc(Review.created_at)).limit(per_page).offset((active_page-1)*per_page)).scalars()
-        session["category"] = "new_date"
-    return render_template('courses/reviews.html',course_id=course_id,review_exist=review_exist,reviews=reviews, per_page=per_page,count_notes=count_notes ,start_page=start_page, end_page=end_page, active_page=active_page, review_cur_user=review_cur_user)
-
-
+    db.session.commit()
+    return jsonify({'message': 'Room updated!'})
 

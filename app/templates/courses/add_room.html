@@ -1,0 +1,30 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Room</title>
+</head>
+<body>
+    <h1>Add New Room</h1>
+
+    <!-- Form to add a room -->
+    <form action="{{ url_for('courses.add_room') }}" method="post">
+        <!-- Include necessary fields -->
+        <!-- Example fields below -->
+        
+        <!-- Other fields like building_id, room_number, etc., should also be included -->
+        
+        <!-- Submit button -->
+        <input type="submit" value="Add Room">
+    </form>
+
+    <a href="{{ url_for('courses.index') }}">Вернуться в аудиторный фонд</a>
+
+</body>
+</html>
+
+{% endblock %}

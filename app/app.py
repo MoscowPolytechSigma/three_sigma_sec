@@ -1,7 +1,7 @@
 from flask import Flask, render_template, send_from_directory
 from flask_migrate import Migrate
 from sqlalchemy.exc import SQLAlchemyError
-from models import db, Category, Image
+from models import db
 from auth import bp as auth_bp, init_login_manager
 from courses import bp as courses_bp
 
@@ -26,14 +26,4 @@ app.register_blueprint(courses_bp)
 
 @app.route('/')
 def index():
-    categories = db.session.execute(db.select(Category)).scalars()
-    return render_template(
-        'index.html',
-        categories=categories,
-    )
-
-@app.route('/images/<image_id>')
-def image(image_id):
-    img = db.get_or_404(Image, image_id)
-    return send_from_directory(app.config['UPLOAD_FOLDER'],
-                               img.storage_filename)
+    return render_template('index.html')

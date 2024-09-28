@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% from 'pagination.html' import render_pagination %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Room Calculations</title>
+</head>
+<body>
+    <h1>Room Calculations</h1>
+    <table border="1">
+        <thead>
+            <tr>
+                <th>Room Number</th>
+                <th>Area (sq.m)</th>
+                <th>Volume (cu.m)</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for result in results %}
+            <tr>
+                <td>{{ result.room_number }}</td>
+                <td>{{ result.area }}</td>
+                <td>{{ result.volume }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+    <a href="{{ url_for('courses.index') }}">Вернуться в аудиторный фонд</a>
+</body>
+</html>
+{% endblock %}

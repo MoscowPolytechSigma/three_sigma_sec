@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% from 'pagination.html' import render_pagination %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Building</title>
+</head>
+<body>
+    <h1>Update Building Information</h1>
+
+    <!-- Assuming building data is passed as context -->
+    <form action="{{ url_for('courses.update_building', id=building.id) }}" method="post">
+        <label for="name">Building Name:</label><br/>
+        <input type="text" id="name" name="name" value="{{ building.name }}" required><br/>
+        
+        <label for="ceiling_height">Ceiling Height (m):</label><br/>
+        <input type="number" id="ceiling_height" name="ceiling_height" value="{{ building.ceiling_height }}" step="0.01" required><br/>
+        
+        <input type="submit" value="Update Building">
+    </form>
+
+    <a href="{{ url_for('courses.index') }}">Вернуться в аудиторный фонд</a>
+</body>
+</html>
+{% endblock %}

@@ -22,16 +22,6 @@ class Base(DeclarativeBase):
 
 db = SQLAlchemy(model_class=Base)
 
-class Category(Base):
-    __tablename__ = 'categories'
-
-    id = mapped_column(Integer, primary_key=True)
-    name: Mapped[str] = mapped_column(String(100))
-    parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id"))
-
-    def __repr__(self):
-        return '<Category %r>' % self.name
-
 
 class User(Base, UserMixin):
     __tablename__ = 'users'
@@ -56,70 +46,27 @@ class User(Base, UserMixin):
 
     def __repr__(self):
         return '<User %r>' % self.login
-
-class Course(Base):
-    __tablename__ = 'courses'
-
-    id: Mapped[int] = mapped_column(primary_key=True)
-    name: Mapped[str] = mapped_column(String(100))
-    short_desc: Mapped[str] = mapped_column(Text)
-    full_desc: Mapped[str] = mapped_column(Text)
-    rating_sum: Mapped[int] = mapped_column(default=0)
-    rating_num: Mapped[int] = mapped_column(default=0)
-    category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
-    author_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
-    background_image_id: Mapped[str] = mapped_column(ForeignKey("images.id"))
-    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
-
-    author: Mapped["User"] = relationship()
-    category: Mapped["Category"] = relationship(lazy=False)
-    bg_image: Mapped["Image"] = relationship()
-
-    def __repr__(self):
-        return '<Course %r>' % self.name
-
-    @property
-    def rating(self):
-        if self.rating_num > 0:
-            return self.rating_sum / self.rating_num
-        return 0
-
-class Image(db.Model):
-    __tablename__ = 'images'
-
-    id: Mapped[str] = mapped_column(String(100), primary_key=True)
-    file_name: Mapped[str] = mapped_column(String(100))
-    mime_type: Mapped[str] = mapped_column(String(100))
-    md5_hash: Mapped[str] = mapped_column(String(100), unique=True)
-    object_id: Mapped[Optional[int]]
-    object_type: Mapped[Optional[str]] = mapped_column(String(100))
-    created_at: Mapped[datetime] = mapped_column(default=datetime.now)
-
-    def __repr__(self):
-        return '<Image %r>' % self.file_name
-
-    @property
-    def storage_filename(self):
-        _, ext = os.path.splitext(self.file_name)
-        return self.id + ext
-
-    @property
-    def url(self):
-        return url_for('image', image_id=self.id)
-
-class Review(db.Model):
-    __tablename__ = 'reviews'
-
-    id: Mapped[int] = mapped_column(primary_key=True) # -- идентификатор отзыва, 
-    rating: Mapped[int] = mapped_column(nullable=False) # -- оценка, которую пользователь проставил курсу (целое число от 0 до 5), 
-    text: Mapped[str] = mapped_column(Text, nullable=False) # -- текст отзыва, 
-    created_at: Mapped[datetime] = mapped_column(default=datetime.now) # -- дата и время создания отзыва,  
-    course_id: Mapped[int] = mapped_column(ForeignKey("courses.id")) # -- идентификатор курса, 
-    user_id: Mapped[int] = mapped_column(ForeignKey("users.id")) # -- идентификатор пользователя. 
     
-    course: Mapped["Course"] = relationship()
-    user: Mapped["User"] = relationship()
 
-    def __repr__(self):
-        return '<Review %r>' % self.id
+class Building(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    ceiling_height = db.Column(db.Float, nullable=False)
+
+class Department(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(255), nullable=False)
+    parent_id = db.Column(db.Integer, db.ForeignKey('department.id'), nullable=True)
+
+class Room(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    building_id = db.Column(db.Integer, db.ForeignKey('building.id'), nullable=False)
+    room_number = db.Column(db.String(10), nullable=False)
+    location = db.Column(db.String(255))
+    width = db.Column(db.Float, nullable=False)
+    length = db.Column(db.Float, nullable=False)
+    purpose = db.Column(db.String(255))
+    type = db.Column(db.String(255))
+    department_id = db.Column(db.Integer, db.ForeignKey('department.id'), nullable=True)
+
     

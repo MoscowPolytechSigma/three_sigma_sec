@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% from 'pagination.html' import render_pagination %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Update Room Information</title>
+</head>
+<body>
+
+<h1>Update Room Information</h1>
+
+<!-- Assuming room data is passed as context -->
+<form action="{{ url_for('courses.update_room', id=room.id) }}" method="post">
+
+<!-- Include necessary fields similar to add_room.html -->
+
+<input type="submit" value="Update Room">
+</form>
+
+<a href="{{ url_for('courses.index') }}">Вернуться в аудиторный фонд</a>
+
+</body></html>
+
+{% endblock %}
