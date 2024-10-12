@@ -1,0 +1,22 @@
+{% extends 'base.html' %} {% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Building</title>
+</head>
+<body>
+    <h1>List of Building</h1>
+    <tr><th>Name</th><th>ceiling_height</th></tr> <!--ряд с ячейками заголовков-->
+    <table>
+    {% for building in buildings %}
+    <tr><td>{{ building.name }}</td><td>{{ building.ceiling_height }}</td></tr>
+    {% endfor %}
+</table>
+
+    <a href="{{ url_for('courses.index') }}">Вернуться в аудиторный фонд</a>
+</body>
+</html>
+
+{% endblock %}

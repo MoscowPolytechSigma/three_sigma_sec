@@ -1,0 +1,58 @@
+volumes:
+  db_volume: {}
+networks:
+  custom_network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet:  172.20.0.0/16
+
+services:
+  flask:
+    build: 
+      context: ./project
+      dockerfile: Dockerfile
+    container_name: flask
+    env_file: 
+      - .env
+    environment:
+      - DB_IP=${DB_IP}
+      - DB_LOGIN=${DB_LOGIN}
+      - DB_PASSWORD=${DB_PASSWORD}
+      - DB_NAME=${DB_NAME}
+      - DB_PORT=${DB_PORT}
+    restart: on-failure
+    # Прокладывам путь для файлов. Все файлы, которые хранятся у вас в 
+    # директории ./project, появятся в директории контейнера /project
+    volumes:
+      - ./project:/project
+    # Порт, который будет смотреть наружу : порт который используется внутри контейнера
+    ports:
+      - "5000:5000"
+    networks:
+      custom_network:
+        ipv4_address:  172.20.0.22
+    depends_on:
+      - mysql
+    #command: sh -c "flask db migrate -m 'Initial migration' && flask db upgrade && flask run --host=172.20.0.22"
+    command: sh -c "flask run --host=172.20.0.22"
+  mysql:
+    image: mysql:8.0
+    ports:
+      - 3306:3306
+    env_file: 
+      - .env
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_USER: nail
+      MYSQL_PASSWORD: nail
+      MYSQL_DATABASE: nail_db
+    volumes:
+      - db_volume:/var/lib/mysql
+    networks:
+      custom_network:
+        ipv4_address: 172.20.0.23
+    
+    
+
