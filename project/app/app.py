@@ -27,3 +27,5 @@ app.register_blueprint(courses_bp)
 @app.route('/')
 def index():
     return render_template('index.html')
+
+print("any changes")
