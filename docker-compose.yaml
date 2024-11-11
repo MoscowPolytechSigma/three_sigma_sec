@@ -34,8 +34,8 @@ services:
         ipv4_address:  172.20.0.22
     depends_on:
       - mysql
-    #command: sh -c "flask db migrate -m 'Initial migration' && flask db upgrade && flask run --host=172.20.0.22"
-    command: sh -c "flask run --host=172.20.0.22"
+    command: sh -c "flask db migrate -m 'Initial migration' && flask db upgrade && flask run --host=172.20.0.22"
+    #command: sh -c "flask run --host=172.20.0.22"
   mysql:
     image: mysql:8.0
     ports:
