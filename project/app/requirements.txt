@@ -19,4 +19,3 @@ SQLAlchemy==2.0.30
 typing-extensions==4.11.0
 werkzeug==3.0.3
 zipp==3.18.1
-flake8==3.8.4
