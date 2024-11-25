@@ -1,4 +1,4 @@
-from func import calculate_area, calculate_volume
+from app.func import calculate_area, calculate_volume
 import pytest
 
 def test_1_calculate_area():
